@@ -58,6 +58,8 @@ Un segue est une transition entre deux écrans (view controllers). Il permet de 
 
 Une constraint définit la position et la taille d’un élément par rapport à d’autres éléments ou à son parent. Elle fait partie du système Auto Layout, qui permet à l’interface de s’adapter automatiquement aux différentes tailles d’écran et orientations en appliquant ces règles.
 
+# 10-
+
 ### Expliquez ce qu’est un #selector en Swift
 
 En Swift, un #selector est utilisé pour connecter des actions, comme des événements d’interface utilisateur, à des fonctions spécifiques. Il est utilisé notamment avec des cibles (target) et des actions (action) pour des composants comme les boutons.
