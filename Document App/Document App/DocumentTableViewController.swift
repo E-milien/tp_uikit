@@ -34,8 +34,6 @@ class DocumentTableViewController: UITableViewController {
         listImage = listFileInBundle()
     }
     
-    // MARK: - Table view data source
-    
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return 1
@@ -57,28 +55,21 @@ class DocumentTableViewController: UITableViewController {
         return cell
     }
     
-        override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-            let currentIndex = tableView.indexPathForSelectedRow!.row
-            let document = DocumentTableViewController.DocumentFile.generateData[currentIndex]
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let file = listImage[indexPath.row]
+        self.instantiateQLPreviewController(withUrl: file.url)
+    }
     
-            if let destination = segue.destination as? DocumentViewController {
-                destination.imageName = document.title
-            }
+    func instantiateQLPreviewController(withUrl url: URL){
+        let previewController = QLPreviewController()
+        previewController.dataSource = self
+        if let index = listImage.firstIndex(where: { $0.url == url }) {
+            previewController.currentPreviewItemIndex = index
+        } else {
+            print("Image with URL \(url) not found.")
         }
-    
-    // On utilise plus un segue, nous devons donc utiliser le navigationController pour afficher le QLPreviewController
-//    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let file = listImage[indexPath.row]
-//        // A vous de coder cette fonction
-//        self.instantiateQLPreviewController(withUrl: file.url)
-//    }
-//    
-//    // Todo
-//    func instantiateQLPreviewController(withUrl url: URL){
-//        let previewController = QLPreviewController()
-//        previewController.dataSource = self
-//        present(previewController, animated: true)
-//    }
+        present(previewController, animated: true)
+    }
         
     func listFileInBundle() -> [DocumentFile] {
         let fm = FileManager.default // Crée une instance de FileManager pour manipuler les fichiers
@@ -117,4 +108,12 @@ extension Int {
     }
 }
 
-
+extension DocumentTableViewController: QLPreviewControllerDataSource {
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        return listImage.count
+    }
+    
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        return listImage[index].url as QLPreviewItem
+    }
+}
