@@ -57,3 +57,19 @@ Un segue est une transition entre deux écrans (view controllers). Il permet de 
 ## Exercice 2 
 
 Une constraint définit la position et la taille d’un élément par rapport à d’autres éléments ou à son parent. Elle fait partie du système Auto Layout, qui permet à l’interface de s’adapter automatiquement aux différentes tailles d’écran et orientations en appliquant ces règles.
+
+### Expliquez ce qu’est un #selector en Swift
+
+En Swift, un #selector est utilisé pour connecter des actions, comme des événements d’interface utilisateur, à des fonctions spécifiques. Il est utilisé notamment avec des cibles (target) et des actions (action) pour des composants comme les boutons.
+
+### Que représente .add dans notre appel ?
+
+.add est une valeur énumérée (de type UIBarButtonItem.SystemItem) qui représente un bouton système standard affichant une icône de type “Ajouter” (un signe +).
+
+### Expliquez également pourquoi XCode vous demande de mettre le mot clé @objc devant la fonction ciblée par le #selector 
+
+Le mot-clé @objc est nécessaire pour que Swift rende la méthode accessible à l’API d’Objective-C, ce qui permet au #selector de l’utiliser pour lier l’action du bouton.
+
+### Peut-on ajouter plusieurs boutons dans la barre de navigation ? Si oui, comment en code ?
+
+Oui, on peut ajouter plusieurs boutons dans la barre de navigation. Pour cela, vous devez utiliser la propriété rightBarButtonItems (pour les boutons à droite) ou leftBarButtonItems (pour les boutons à gauche) de navigationItem, qui accepte un tableau de UIBarButtonItem.

@@ -9,9 +9,10 @@ import UIKit
 import QuickLook
 
 
+
 class DocumentTableViewController: UITableViewController {
     
-    var listImage: [DocumentFile] = []
+    var listImage: [[DocumentFile]] = [[DocumentFile](),[DocumentFile]()]
     let previewController = QLPreviewController()
     
     struct DocumentFile {
@@ -31,23 +32,68 @@ class DocumentTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        listImage = listFileInBundle()
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action:  #selector(addDocument))
+        self.loadAllDocumentFile()
+    }
+    
+    @objc func addDocument() {
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.jpeg, .png])
+        documentPicker.delegate = self
+        documentPicker.modalPresentationStyle = .overFullScreen
+        documentPicker.allowsMultipleSelection = false
+        present(documentPicker, animated: true)
+    }
+    
+    func loadAllDocumentFile(){
+        
+        
+        let fm = FileManager.default
+        
+        let path = fm.urls(for: .documentDirectory, in: .userDomainMask).first!.path
+        
+        let items = try! fm.contentsOfDirectory(atPath: path)
+        
+        var documentList = [DocumentFile]()
+        
+        for item in items {
+            let currentUrl = URL(fileURLWithPath: path + "/" + item)
+            let resourcesValues = try! currentUrl.resourceValues(forKeys: [.contentTypeKey, .nameKey, .fileSizeKey])
+            documentList.append(DocumentFile(
+                title: resourcesValues.name!,
+                size: resourcesValues.fileSize ?? 0,
+                imageName: item,
+                url: currentUrl,
+                type: resourcesValues.contentType!.description
+            ))
+        }
+        listImage[0] = documentList
+        listImage[1] = listFileInBundle()
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 1
+        return listImage.count
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return DocumentTableViewController.DocumentFile.generateData.count
+        return listImage[section].count
+    }
+    
+    override func tableView(
+        _ tableView: UITableView,
+        titleForHeaderInSection section: Int
+    ) -> String?{
+        if section == 0 {
+            return "Imported"
+        }
+        
+        return "Bundle"
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "DocumentCell", for: indexPath)
-        let document = DocumentTableViewController.DocumentFile.generateData[indexPath.row]
+        let document = listImage[indexPath.section][indexPath.row]
         
         cell.textLabel?.text = document.title
         cell.detailTextLabel?.text = document.size.formattedSize()
@@ -56,17 +102,22 @@ class DocumentTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let file = listImage[indexPath.row]
+        let file = listImage[indexPath.section][indexPath.row]
         self.instantiateQLPreviewController(withUrl: file.url)
     }
     
     func instantiateQLPreviewController(withUrl url: URL){
         let previewController = QLPreviewController()
         previewController.dataSource = self
-        if let index = listImage.firstIndex(where: { $0.url == url }) {
+        if let index = listImage[0].firstIndex(where: { $0.url == url }) {
             previewController.currentPreviewItemIndex = index
         } else {
-            print("Image with URL \(url) not found.")
+            if let index = listImage[1].firstIndex(where: { $0.url == url }) {
+                previewController.currentPreviewItemIndex = index
+            } else {
+                
+                print("Image with URL \(url) not found.")
+            }
         }
         present(previewController, animated: true)
     }
@@ -110,10 +161,47 @@ extension Int {
 
 extension DocumentTableViewController: QLPreviewControllerDataSource {
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-        return listImage.count
+        return listImage.flatMap { $0 }.count
     }
     
     func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-        return listImage[index].url as QLPreviewItem
+        var currentIndex = index
+        for subArray in listImage {
+            if currentIndex < subArray.count {
+                let documentFile = subArray[currentIndex]
+                return documentFile.url as QLPreviewItem
+            } else {
+                currentIndex -= subArray.count
+            }
+        }
+        return URL(string: "https://example.com") as! any QLPreviewItem as QLPreviewItem
+    }
+}
+
+
+
+extension DocumentTableViewController: UIDocumentPickerDelegate {
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        for url in urls {
+            self.copyFileToDocumentsDirectory(fromUrl: url)
+        }
+        self.loadAllDocumentFile()
+        tableView.reloadData()
+    }
+    
+    func copyFileToDocumentsDirectory(fromUrl url: URL) {
+           let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+           
+           let destinationUrl = documentsDirectory.appendingPathComponent(url.lastPathComponent)
+           
+           do {
+               try FileManager.default.copyItem(at: url, to: destinationUrl)
+           } catch {
+               print(error)
+           }
+       }
+    
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        
     }
 }
